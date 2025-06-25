@@ -1,5 +1,9 @@
 import os,json
+from dotenv import load_dotenv, find_dotenv
 from typing import Annotated, TypedDict
+
+dotenv_file = find_dotenv()
+load_dotenv(dotenv_file)
 
 # For LangGraph
 from langgraph.graph import StateGraph, START, END
@@ -9,7 +13,7 @@ from langgraph.prebuilt import create_react_agent
 # For LanChain Runnable
 from langchain_ollama import ChatOllama
 from langchain_tavily import TavilySearch
-from langchain_core.messages import ToolMessage, AIMessage
+from langchain_core.messages import ToolMessage, AIMessage, HumanMessage, SystemMessage
 
 # Ollama 설정
 # 기본적으로 ChatOllama는 로컬의 11434 포트에서 실행되는 ollama 서버에 연결.
@@ -21,8 +25,7 @@ llm = ChatOllama(
 )
 
 # TavilySearch는 LangChain의 Search API를 사용하여 웹 검색을 수행하는 기능을 제공.
-# LLM에 최적화된 검색 기능
-os.environ["TAVILY_API_KEY"] = "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"  # Tavily API 키 설정
+# LLM에 최적화된 검색 기능, Tavily API 필요.
 tavily = TavilySearch(max_results=2)
 tools = [tavily]
 
@@ -100,7 +103,12 @@ graph_builder.add_edge(START, "chatbot")
 graph = graph_builder.compile()
 
 def stream_graph_updates(user_input: str):
-    for event in graph.stream({"messages": [("user", user_input), ("system", "Use tools only when user asks about real-time question.")]}):
+    for event in graph.stream({"messages": [
+                                    HumanMessage(content=user_input),
+                                    #SystemMessage(content="You can use tools if user asks about time-critical question.")
+                                    ]}):
+        #print("[Event]:", event)
+        #print("\n")
         for value in event.values():
             print("Agent:", value["messages"][-1].content)
 
