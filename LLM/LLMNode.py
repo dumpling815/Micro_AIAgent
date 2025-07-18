@@ -44,7 +44,7 @@ class LLMNode(BaseNode):
         self.tools: Dict[str, Runnable] = self._available_tools(tool_config)  # Dictionary to hold tools if needed
     
     def _load_llm(self, llm_config: dict) -> Runnable:
-        """Load the LLM based on the provided configuration."""
+        # Load the LLM based on the provided configuration.
         provider = llm_config.get("provider").lower()
         model = llm_config.get("model")
         temperature = llm_config.get("temperature", 0.7) # Default Temperature: 0.7
@@ -110,7 +110,6 @@ class LLMNode(BaseNode):
                     return [last_msg]
                 else:
                     raise ValueError(f"Invalid routing decision: {decision}. Available tools: {', '.join(self.tools.keys())} or 'llm'.")
-            
             elif isinstance(last_msg, ToolMessage):
                 # Case 2: After tool call -> Branching based on tool output
                 tool_result = last_msg.content
@@ -142,6 +141,7 @@ class LLMNode(BaseNode):
             else:
                 # Case 3: Invalid input message type - Router only supports HumanMessage or ToolMessage
                 raise ValueError("Invalid input message type for routing mode.")
-
-        response = await self.llm.ainvoke(input_messages)
-        return response if isinstance(response, list) else [response]
+            
+        else: # LLMMode.ENDPOINT
+            response = await self.llm.ainvoke(input_messages)
+            return response if isinstance(response, list) else [response]
